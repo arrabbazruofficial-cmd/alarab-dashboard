@@ -1,12 +1,39 @@
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Users, Building2, FileText, Plane } from "lucide-react";
+import { api } from "@/lib/api";
+
+interface RequestItem {
+  id: string;
+  request_type: string;
+  status: string;
+  agency?: number;
+  created_at: string;
+}
 
 export default function AdminDashboard() {
+  const [requests, setRequests] = useState<RequestItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const response = await api.get('/requests/');
+        setRequests(response.data);
+      } catch (error) {
+        console.error("Failed to fetch requests", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRequests();
+  }, []);
+
   const stats = [
-    { label: "Total Agencies", value: "142", icon: Building2, trend: "+12%" },
-    { label: "Total Customers", value: "8,204", icon: Users, trend: "+4%" },
-    { label: "Visa Requests", value: "48", icon: FileText, trend: "+20%" },
-    { label: "Ticket Requests", value: "12", icon: Plane, trend: "-2%" },
+    { label: "Total Requests", value: requests.length.toString(), icon: FileText, trend: "+12%" },
+    { label: "Pending Approvals", value: requests.filter(r => r.status === 'SUBMITTED' || r.status === 'DRAFT').length.toString(), icon: Users, trend: "+4%" },
+    { label: "Group Visas", value: requests.filter(r => r.request_type === 'GROUP_VISA').length.toString(), icon: Building2, trend: "+20%" },
+    { label: "Air Tickets", value: requests.filter(r => r.request_type === 'AIR_TICKET').length.toString(), icon: Plane, trend: "-2%" },
   ];
 
   return (
@@ -44,21 +71,27 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <div className="bg-card border border-border rounded-xl shadow-sm p-6 h-[400px]">
+          <div className="bg-card border border-border rounded-xl shadow-sm p-6 h-[400px] overflow-y-auto">
             <h3 className="font-semibold mb-4">Recent Requests</h3>
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center justify-between p-3 hover:bg-secondary/50 rounded-lg cursor-pointer transition-colors">
-                  <div>
-                    <p className="text-sm font-medium">REQ-{1000 + i}</p>
-                    <p className="text-xs text-muted-foreground">Group Visa • Al-Aman Tours</p>
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading requests...</p>
+            ) : requests.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No recent requests.</p>
+            ) : (
+              <div className="space-y-4">
+                {requests.slice(0, 5).map((req) => (
+                  <div key={req.id} className="flex items-center justify-between p-3 hover:bg-secondary/50 rounded-lg cursor-pointer transition-colors">
+                    <div>
+                      <p className="text-sm font-medium">{req.id.substring(0, 8).toUpperCase()}</p>
+                      <p className="text-xs text-muted-foreground">{req.request_type.replace('_', ' ')} • {new Date(req.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded-full font-medium">
+                      {req.status}
+                    </span>
                   </div>
-                  <span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded-full font-medium">
-                    Pending
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

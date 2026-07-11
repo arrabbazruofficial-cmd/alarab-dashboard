@@ -4,6 +4,7 @@ import * as z from "zod";
 import { useState } from "react";
 import { Plane, Building, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
 
 const groupVisaSchema = z.object({
   numberOfPassengers: z.number().min(1),
@@ -30,6 +31,7 @@ type GroupVisaFormValues = z.infer<typeof groupVisaSchema>;
 
 export function GroupVisaForm() {
   const [activeTab, setActiveTab] = useState<"MAKKAH" | "MADINAH">("MAKKAH");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { register, handleSubmit, formState: { errors } } = useForm<GroupVisaFormValues>({
     resolver: zodResolver(groupVisaSchema),
@@ -41,9 +43,17 @@ export function GroupVisaForm() {
     }
   });
 
-  const onSubmit = (data: GroupVisaFormValues) => {
-    console.log(data);
-    // Submit to API
+  const onSubmit = async (data: GroupVisaFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await api.post("/requests/group-visa/", data);
+      alert("Form submitted successfully!");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to submit form.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getHotelIndex = (city: "MAKKAH" | "MADINAH") => city === "MAKKAH" ? 0 : 1;
@@ -155,8 +165,8 @@ export function GroupVisaForm() {
       </div>
 
       <div className="flex justify-end pt-4">
-        <button type="submit" className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold shadow-md hover:opacity-90 transition-opacity">
-          Submit Group Visa
+        <button type="submit" disabled={isSubmitting} className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold shadow-md hover:opacity-90 transition-opacity disabled:opacity-50">
+          {isSubmitting ? "Submitting..." : "Submit Request"}
         </button>
       </div>
 
