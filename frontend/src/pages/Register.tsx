@@ -3,53 +3,43 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useNavigate, Link } from "react-router";
-import { jwtDecode } from "jwt-decode";
 import { api } from "@/lib/api";
 
-const loginSchema = z.object({
+const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(1, "Password is required."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
-interface JwtPayload {
-  role: string;
-  user_id: string;
-  exp: number;
-}
-
-export default function Login() {
+export default function Register() {
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema)
+  const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema)
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
     setError("");
     try {
-      const response = await api.post("/auth/login/", data);
-      const { access, refresh } = response.data;
-
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("refresh_token", refresh);
-
-      // Decode token to get user role
-      const decoded = jwtDecode<JwtPayload>(access);
+      await api.post("/auth/register/", {
+        email: data.email,
+        password: data.password,
+      });
       
-      if (decoded.role === "SUPER_ADMIN" || decoded.role === "ADMIN") {
-        navigate("/admin");
-      } else if (decoded.role === "AGENCY") {
-        navigate("/agency");
-      } else {
-        setError("Unauthorized role.");
-      }
+      setSuccess(true);
+      setTimeout(() => navigate("/login"), 3000);
+      
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Invalid email or password.");
+      setError(err.response?.data?.email?.[0] || err.response?.data?.detail || "Failed to register. Email may already be in use.");
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +53,9 @@ export default function Login() {
         <div className="flex flex-col items-center mb-8">
           <img src="/logo.png" alt="Al-Rabb Tours" className="w-16 h-16 object-contain mb-4 drop-shadow-sm" />
           <h1 className="text-2xl font-bold bg-gradient-sunrise bg-clip-text text-transparent">
-            Welcome Back
+            Create an Account
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to your enterprise account</p>
+          <p className="text-sm text-muted-foreground mt-1">Join the enterprise platform</p>
         </div>
 
         {error && (
@@ -73,15 +63,21 @@ export default function Login() {
             {error}
           </div>
         )}
+        
+        {success && (
+          <div className="bg-green-100 text-green-800 text-sm font-medium p-3 rounded-lg mb-6 border border-green-200 text-center">
+            Account created successfully! Redirecting to login...
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Email Address</label>
             <input 
               type="email" 
               {...register("email")}
               className="w-full p-2.5 bg-input border border-border rounded-lg focus:ring-2 focus:ring-ring outline-none transition-all"
-              placeholder="admin@alrabb.com"
+              placeholder="agency@example.com"
             />
             {errors.email && <p className="text-destructive text-xs">{errors.email.message}</p>}
           </div>
@@ -97,16 +93,28 @@ export default function Login() {
             {errors.password && <p className="text-destructive text-xs">{errors.password.message}</p>}
           </div>
 
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Confirm Password</label>
+            <input 
+              type="password" 
+              {...register("confirmPassword")}
+              className="w-full p-2.5 bg-input border border-border rounded-lg focus:ring-2 focus:ring-ring outline-none transition-all"
+              placeholder="••••••••"
+            />
+            {errors.confirmPassword && <p className="text-destructive text-xs">{errors.confirmPassword.message}</p>}
+          </div>
+
           <button 
             type="submit" 
-            disabled={isLoading}
+            disabled={isLoading || success}
             className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 mt-4 shadow-md"
           >
-            {isLoading ? "Signing in..." : "Sign In"}
+            {isLoading ? "Creating Account..." : "Sign Up"}
           </button>
         </form>
+        
         <p className="text-center text-sm text-muted-foreground mt-6">
-          Don't have an account? <Link to="/register" className="text-primary font-medium hover:underline">Sign up</Link>
+          Already have an account? <Link to="/login" className="text-primary font-medium hover:underline">Sign in</Link>
         </p>
       </div>
     </div>
