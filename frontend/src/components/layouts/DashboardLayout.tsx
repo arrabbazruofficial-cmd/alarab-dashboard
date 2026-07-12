@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import {
   LayoutDashboard, FileText, Plane, Bell, Settings, User,
-  LogOut, Building2, Users, ClipboardList, BarChart3, Shield, ScrollText,
+  LogOut, Building2, Users, ClipboardList, Shield,
 } from 'lucide-react';
 
 interface SidebarItem {
