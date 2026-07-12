@@ -279,8 +279,8 @@ export default function GroupVisaForm() {
           <h2 className="text-xl font-semibold mb-6">Attachments</h2>
           <FileUpload 
             label="Upload Passports / Documents (PDF, JPG, PNG)"
-            onUploadSuccess={(url, name, type, size) => {
-              setAttachments(prev => [...prev, { file_url: url, file_name: name, file_type: type, file_size: size }]);
+            onUploadSuccess={(file) => {
+              setAttachments(prev => [...prev, file]);
             }}
           />
         </div>
