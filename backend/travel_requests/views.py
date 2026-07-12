@@ -22,6 +22,11 @@ class RequestViewSet(viewsets.ModelViewSet):
         if user.role in ['SUPER_ADMIN', 'ADMIN']:
             return BaseRequest.objects.all()
         elif user.role == 'AGENCY':
+            from agencies.models import Agency
+            Agency.objects.get_or_create(
+                user=user,
+                defaults={'company_name': 'Unknown Agency', 'contact_person': 'Owner', 'phone_number': ''}
+            )
             return BaseRequest.objects.filter(agency__user=user)
         elif user.role == 'CUSTOMER':
             return BaseRequest.objects.filter(customer=user)
@@ -30,7 +35,11 @@ class RequestViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         if user.role == 'AGENCY':
-            agency = getattr(user, 'agency_profile', None)
+            from agencies.models import Agency
+            agency, _ = Agency.objects.get_or_create(
+                user=user,
+                defaults={'company_name': 'Unknown Agency', 'contact_person': 'Owner', 'phone_number': ''}
+            )
             serializer.save(agency=agency)
         elif user.role == 'CUSTOMER':
             serializer.save(customer=user)
