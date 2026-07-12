@@ -98,4 +98,13 @@ class AttachmentViewSet(viewsets.ModelViewSet):
         return Attachment.objects.filter(request__agency__user=user) | Attachment.objects.filter(request__customer=user)
 
     def perform_create(self, serializer):
-        serializer.save(uploaded_by=self.request.user)
+        file_obj = self.request.FILES.get('file')
+        if file_obj:
+            serializer.save(
+                uploaded_by=self.request.user,
+                file_name=file_obj.name,
+                file_type=file_obj.content_type,
+                file_size=file_obj.size
+            )
+        else:
+            serializer.save(uploaded_by=self.request.user)

@@ -163,9 +163,10 @@ class Attachment(models.Model):
     request = models.ForeignKey(
         BaseRequest, on_delete=models.CASCADE, related_name='attachments'
     )
-    file_url = models.URLField(max_length=1024)
-    file_name = models.CharField(max_length=255)
-    file_type = models.CharField(max_length=50)
+    file = models.FileField(upload_to='attachments/', null=True, blank=True)
+    file_url = models.URLField(max_length=1024, blank=True, null=True)
+    file_name = models.CharField(max_length=255, blank=True, null=True)
+    file_type = models.CharField(max_length=50, blank=True, null=True)
     file_size = models.IntegerField(default=0, help_text='Size in bytes')
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True

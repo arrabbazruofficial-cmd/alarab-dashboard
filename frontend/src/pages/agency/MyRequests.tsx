@@ -145,8 +145,36 @@ function RequestDetailsModal({ request, onClose }: { request: any, onClose: () =
                 <div className="col-span-2"><span className="text-muted-foreground">Notes:</span> {request.air_ticket.additional_notes || 'None'}</div>
               </div>
             </div>
-          )}
         </div>
+        
+        {request.attachments && request.attachments.length > 0 && (
+          <div className="space-y-3 mt-6 pt-6 border-t border-border">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <FileText className="w-5 h-5 text-muted-foreground" />
+              Uploaded Files
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {request.attachments.map((file: any) => (
+                <a 
+                  key={file.id} 
+                  href={file.file || file.file_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-secondary transition-colors"
+                >
+                  <div className="bg-primary/10 p-2 rounded text-primary">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-sm font-medium truncate">{file.file_name || (file.file ? file.file.split('/').pop() : 'Document')}</p>
+                    <p className="text-xs text-muted-foreground">{(file.file_size / 1024).toFixed(1)} KB • Click to view</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       </div>
     </div>
   );
@@ -257,6 +285,22 @@ export default function MyRequests() {
                           Edit
                         </button>
                       )}
+
+                      <button 
+                        onClick={async () => {
+                          if (confirm("Are you sure you want to permanently delete this request?")) {
+                            try {
+                              await api.delete(`/requests/${req.id}/`);
+                              setRequests(requests.filter((r) => r.id !== req.id));
+                            } catch (err) {
+                              alert("Failed to delete request.");
+                            }
+                          }
+                        }}
+                        className="text-destructive hover:underline font-medium text-xs flex items-center gap-1"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))
