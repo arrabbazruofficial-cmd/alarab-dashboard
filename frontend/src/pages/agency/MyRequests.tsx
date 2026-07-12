@@ -145,6 +145,7 @@ function RequestDetailsModal({ request, onClose }: { request: any, onClose: () =
                 <div className="col-span-2"><span className="text-muted-foreground">Notes:</span> {request.air_ticket.additional_notes || 'None'}</div>
               </div>
             </div>
+          )}
         </div>
         
         {request.attachments && request.attachments.length > 0 && (
@@ -174,7 +175,6 @@ function RequestDetailsModal({ request, onClose }: { request: any, onClose: () =
             </div>
           </div>
         )}
-      </div>
       </div>
     </div>
   );
