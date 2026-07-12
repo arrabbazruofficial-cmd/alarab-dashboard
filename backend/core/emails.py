@@ -5,16 +5,27 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
+import threading
+
+def _send_mail_task(subject, message, from_email, recipient_list):
+    try:
+        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+    except Exception as e:
+        logger.error(f'Failed to send email: {e}')
+
 def send_notification_email(subject: str, message: str, recipient_list: List[str]):
     if not settings.EMAIL_HOST_PASSWORD:
         logger.warning('EMAIL_HOST_PASSWORD not set. Email not sent.')
         return False
-    try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list, fail_silently=False)
-        return True
-    except Exception as e:
-        logger.error(f'Failed to send email: {e}')
-        return False
+    
+    # Run email sending in a background thread to prevent blocking the web request
+    thread = threading.Thread(
+        target=_send_mail_task, 
+        args=(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list)
+    )
+    thread.daemon = True
+    thread.start()
+    return True
 
 def send_otp_email(email: str, code: str):
     subject = "Verify your Al-Rabb Tours Account"
