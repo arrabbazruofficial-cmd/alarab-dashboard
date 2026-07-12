@@ -40,8 +40,6 @@ const getAdminSidebar = (): SidebarItem[] => [
   { icon: Plane, label: 'Ticket Requests', href: '/admin/tickets' },
   { icon: ClipboardList, label: 'All Requests', href: '/admin/requests' },
   { icon: Bell, label: 'Notifications', href: '/admin/notifications' },
-  { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },
-  { icon: ScrollText, label: 'Audit Logs', href: '/admin/audit' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];
 
