@@ -32,12 +32,41 @@ function RequestDetailsModal({ request, onClose }: { request: any, onClose: () =
               </span>
             </div>
             <div>
-              <p className="text-muted-foreground font-medium">Submitted By</p>
-              <p>{request.agency ? request.agency.company_name : request.customer ? request.customer.email : 'Unknown'}</p>
+              <p className="text-muted-foreground font-medium">Submitted By (Agency)</p>
+              <p>{request.agency_details ? request.agency_details.company_name : request.assigned_to_details ? request.assigned_to_details.email : 'Unknown'}</p>
             </div>
           </div>
 
           <div className="h-px bg-border" />
+
+          {request.attachments && request.attachments.length > 0 && (
+            <div className="space-y-3 mb-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <FileText className="w-5 h-5 text-muted-foreground" />
+                Uploaded Files
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {request.attachments.map((file: any) => (
+                  <a 
+                    key={file.id} 
+                    href={file.file} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-secondary transition-colors"
+                  >
+                    <div className="bg-primary/10 p-2 rounded text-primary">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-medium truncate">{file.file.split('/').pop()}</p>
+                      <p className="text-xs text-muted-foreground">Click to view document</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+              <div className="h-px bg-border my-4" />
+            </div>
+          )}
 
           {request.request_type === 'GROUP_VISA' && request.group_visa && (
             <div className="space-y-4">
