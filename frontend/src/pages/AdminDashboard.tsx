@@ -606,7 +606,7 @@ function SettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Platform Name</label>
-              <input type="text" disabled value="Al-Rabb Tours Dashboard" className="w-full p-2.5 bg-secondary/50 border border-border rounded-lg" />
+              <input type="text" disabled value="AR-RABB Tours and Travels Dashboard" className="w-full p-2.5 bg-secondary/50 border border-border rounded-lg" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Support Email</label>

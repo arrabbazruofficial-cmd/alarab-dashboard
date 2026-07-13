@@ -27,7 +27,7 @@ function DashboardHome() {
         ))}
       </div>
       <div className="bg-card p-6 rounded-xl border border-border shadow-sm mt-6">
-        <h2 className="text-lg font-semibold mb-4">Welcome to Al-Rabb Tours</h2>
+        <h2 className="text-lg font-semibold mb-4">Welcome to AR-RABB Tours and Travels</h2>
         <p className="text-muted-foreground">Book your air tickets and track your requests easily from this portal.</p>
       </div>
     </div>

@@ -79,7 +79,7 @@ export default function Login() {
         
         <div className="w-full max-w-md relative z-10 animate-fade-up" style={{ animationDelay: '0.1s' }}>
           <div className="flex flex-col mb-10">
-            <img src="/logo.png" alt="Al-Rabb Tours" className="w-16 h-16 object-contain mb-6 drop-shadow-sm" />
+            <img src="/logo.png" alt="AR-RABB Tours and Travels" className="w-16 h-16 object-contain mb-6 drop-shadow-sm" />
             <h1 className="text-3xl font-bold font-heading text-foreground tracking-tight">Welcome Back</h1>
             <p className="text-sm font-semibold text-primary mt-2 tracking-widest uppercase">Enterprise Portal</p>
           </div>

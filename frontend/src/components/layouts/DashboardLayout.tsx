@@ -68,9 +68,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       <aside className="hidden md:flex inset-y-0 left-0 z-40 w-[280px] flex-col bg-transparent text-white relative shrink-0">
         <div className="p-8 pb-4">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Al-Rabb Tours Logo" className="w-10 h-10 object-contain drop-shadow-sm brightness-0 invert" />
+            <img src="/logo.png" alt="AR-RABB Tours and Travels Logo" className="w-10 h-10 object-contain drop-shadow-sm brightness-0 invert" />
             <div>
-              <h1 className="text-xl font-bold font-heading leading-tight tracking-tight text-white">Al-Rabb Tours</h1>
+              <h1 className="text-xl font-bold font-heading leading-tight tracking-tight text-white">AR-RABB Tours and Travels</h1>
               <p className="text-xs text-white/70 font-medium tracking-wide">ENTERPRISE</p>
             </div>
           </div>
@@ -123,7 +123,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       <header className="md:hidden flex items-center justify-between p-4 px-6 text-white shrink-0 z-20">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain brightness-0 invert drop-shadow-sm" />
-          <h1 className="text-lg font-bold font-heading tracking-tight">Al-Rabb</h1>
+          <h1 className="text-lg font-bold font-heading tracking-tight">AR-RABB</h1>
         </div>
         <div className="flex items-center gap-4">
           <NotificationBell />
