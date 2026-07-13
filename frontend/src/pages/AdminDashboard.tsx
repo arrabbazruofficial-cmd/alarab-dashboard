@@ -37,12 +37,12 @@ function DashboardHome() {
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: 'Total Requests', value: metrics.requests, icon: ClipboardList, color: 'text-blue-500' },
-          { label: 'Active Agencies', value: metrics.agencies, icon: Building2, color: 'text-green-500' },
-          { label: 'Registered Customers', value: metrics.customers, icon: Users, color: 'text-purple-500' },
+          { label: 'Total Requests', value: metrics.requests, icon: ClipboardList, color: 'text-blue-500', bg: 'bg-blue-50' },
+          { label: 'Active Agencies', value: metrics.agencies, icon: Building2, color: 'text-green-500', bg: 'bg-green-50' },
+          { label: 'Registered Customers', value: metrics.customers, icon: Users, color: 'text-purple-500', bg: 'bg-purple-50' },
         ].map((stat, i) => (
-          <div key={i} className="bg-card p-6 rounded-xl border border-border shadow-sm flex items-center gap-4">
-            <div className={`p-3 rounded-lg bg-secondary ${stat.color}`}>
+          <div key={i} className="bg-card p-6 rounded-xl border border-border shadow-sm flex items-center gap-4 animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
+            <div className={`p-3 rounded-lg ${stat.bg} ${stat.color}`}>
               <stat.icon className="w-6 h-6" />
             </div>
             <div>
@@ -108,7 +108,7 @@ function UserManagement({ title, role }: { title: string, role?: string }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up stagger-2">
       <h1 className="text-2xl font-bold">{title}</h1>
       <div className="card-panel">
         <div className="overflow-x-auto min-h-[400px]">

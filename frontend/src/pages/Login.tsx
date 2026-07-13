@@ -51,58 +51,81 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background font-sans relative overflow-hidden">
-      {/* Decorative Brand Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#855300]/5 to-[#0051d5]/5 z-0"></div>
-      
-      <div className="relative z-10 w-full max-w-md card-panel p-10">
-        <div className="flex flex-col items-center mb-10">
-          <img src="/logo.png" alt="Al-Rabb Tours" className="w-16 h-16 object-contain mb-4 drop-shadow-sm" />
-          <h1 className="text-3xl font-bold font-heading text-primary">Welcome Back</h1>
-          <p className="text-sm font-medium text-muted-foreground mt-2 tracking-wide">ENTERPRISE PORTAL</p>
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background font-sans">
+      {/* Left Pane - Hero Image */}
+      <div className="hidden lg:block relative overflow-hidden bg-primary/10">
+        <img 
+          src="/login-bg.jpg" 
+          alt="Corporate Travel" 
+          className="absolute inset-0 w-full h-full object-cover animate-fade-up" 
+          style={{ animationDuration: '1.2s' }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#FF7A00]/90 via-[#FF7A00]/20 to-transparent mix-blend-multiply" />
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="absolute bottom-16 left-16 right-16 text-white animate-fade-up" style={{ animationDelay: '0.3s' }}>
+          <h2 className="text-4xl lg:text-5xl font-heading font-bold mb-6 leading-tight drop-shadow-lg">
+            Elevate Your Travel Management
+          </h2>
+          <p className="text-lg text-white/90 max-w-lg drop-shadow-md">
+            Streamline group visas, corporate air ticketing, and request approvals through our secure enterprise portal.
+          </p>
         </div>
+      </div>
 
-        {error && (
-          <div className="bg-destructive/10 text-destructive text-sm font-medium p-3 rounded-lg mb-6 border border-destructive/20 text-center">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email Address</label>
-            <input
-              type="email"
-              {...register('email')}
-              className="w-full p-2.5 bg-input border border-border rounded-lg focus:ring-2 focus:ring-ring outline-none transition-all"
-              placeholder="admin@alrabb.com"
-            />
-            {errors.email && <p className="text-destructive text-xs">{errors.email.message}</p>}
+      {/* Right Pane - Form */}
+      <div className="flex items-center justify-center p-8 lg:p-16 relative overflow-hidden">
+        {/* Decorative background element for mobile */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FF7A00]/5 to-transparent z-0 lg:hidden" />
+        
+        <div className="w-full max-w-md relative z-10 animate-fade-up" style={{ animationDelay: '0.1s' }}>
+          <div className="flex flex-col mb-10">
+            <img src="/logo.png" alt="Al-Rabb Tours" className="w-16 h-16 object-contain mb-6 drop-shadow-sm" />
+            <h1 className="text-3xl font-bold font-heading text-foreground tracking-tight">Welcome Back</h1>
+            <p className="text-sm font-semibold text-primary mt-2 tracking-widest uppercase">Enterprise Portal</p>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Password</label>
-            <input
-              type="password"
-              {...register('password')}
-              className="w-full p-2.5 bg-input border border-border rounded-lg focus:ring-2 focus:ring-ring outline-none transition-all"
-              placeholder="••••••••"
-            />
-            {errors.password && <p className="text-destructive text-xs">{errors.password.message}</p>}
-          </div>
+          {error && (
+            <div className="bg-destructive/10 text-destructive text-sm font-medium p-4 rounded-xl mb-6 border border-destructive/20 text-center animate-fade-up">
+              {error}
+            </div>
+          )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 mt-4 shadow-md"
-          >
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-2 group">
+              <label className="text-sm font-semibold text-foreground/80 group-focus-within:text-primary transition-colors">Email Address</label>
+              <input
+                type="email"
+                {...register('email')}
+                className="w-full"
+                placeholder="admin@alrabb.com"
+              />
+              {errors.email && <p className="text-destructive text-xs font-medium">{errors.email.message}</p>}
+            </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          Don't have an account? <Link to="/register" className="text-primary font-medium hover:underline">Sign up</Link>
-        </p>
+            <div className="space-y-2 group">
+              <label className="text-sm font-semibold text-foreground/80 group-focus-within:text-primary transition-colors">Password</label>
+              <input
+                type="password"
+                {...register('password')}
+                className="w-full"
+                placeholder="••••••••"
+              />
+              {errors.password && <p className="text-destructive text-xs font-medium">{errors.password.message}</p>}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full btn-primary mt-8 py-3 text-lg"
+            >
+              {isLoading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          <p className="text-center text-sm font-medium text-muted-foreground mt-8">
+            Don't have an account? <Link to="/register" className="text-primary font-bold hover:underline">Sign up</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

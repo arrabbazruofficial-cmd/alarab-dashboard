@@ -1,11 +1,11 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import {
   LayoutDashboard, FileText, Plane, Settings, User,
-  LogOut, Building2, Users, ClipboardList, Shield, Menu, X
+  LogOut, Building2, Users, ClipboardList, Shield
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -48,7 +48,6 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const items = role === 'ADMIN'
     ? getAdminSidebar()
@@ -64,30 +63,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="flex h-screen w-full bg-gradient-to-b from-[#855300] to-[#5a3800] text-foreground overflow-hidden font-sans">
-      {/* Mobile Hamburger */}
-      <div className="md:hidden fixed top-4 right-4 z-50">
-        <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 bg-white/10 backdrop-blur-md rounded-lg text-white border border-white/20 shadow-lg"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
-
-      {/* Sidebar Overlay for Mobile */}
-      {mobileMenuOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={cn(
-        "fixed inset-y-0 left-0 z-40 w-[280px] flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 bg-transparent text-white",
-        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+    <div className="flex h-screen w-full bg-gradient-to-b from-[#FF7A00] to-[#FF4500] text-foreground overflow-hidden font-sans relative">
+      {/* Sidebar (Hidden on Mobile) */}
+      <aside className="hidden md:flex inset-y-0 left-0 z-40 w-[280px] flex-col bg-transparent text-white relative">
         <div className="p-8 pb-4">
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="Al-Rabb Tours Logo" className="w-10 h-10 object-contain drop-shadow-sm brightness-0 invert" />
@@ -107,7 +85,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               <Link
                 key={item.href}
                 to={item.href}
-                onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   'relative flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 group',
                   isActive
@@ -143,11 +120,39 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       </aside>
 
       {/* Main Content Area (The Tuck) */}
-      <main className="flex-1 overflow-y-auto bg-background md:rounded-l-[32px] md:my-4 md:mr-4 md:shadow-[-8px_0_30px_rgba(0,0,0,0.1)] transition-all duration-300 relative z-10 flex flex-col">
+      <main className="flex-1 overflow-y-auto bg-background md:rounded-l-[32px] md:my-4 md:mr-4 md:shadow-[-8px_0_30px_rgba(0,0,0,0.1)] transition-all duration-300 relative z-10 flex flex-col pb-24 md:pb-0">
         <div className="flex-1 p-6 md:p-10 relative">
           {children}
         </div>
       </main>
+
+      {/* Bottom Navbar (Mobile Only) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 flex justify-around items-center p-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        {items.slice(0, 4).map((item) => {
+          const isActive = location.pathname === item.href ||
+              (item.href !== basePath && location.pathname.startsWith(item.href));
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                "flex flex-col items-center p-2 rounded-xl transition-all",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <item.icon className="w-6 h-6 mb-1" />
+              <span className="text-[10px] font-semibold">{item.label}</span>
+            </Link>
+          );
+        })}
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center p-2 rounded-xl transition-all text-destructive"
+        >
+          <LogOut className="w-6 h-6 mb-1" />
+          <span className="text-[10px] font-semibold">Logout</span>
+        </button>
+      </nav>
     </div>
   );
 }

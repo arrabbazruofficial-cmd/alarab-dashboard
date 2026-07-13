@@ -54,17 +54,17 @@ function DashboardHome() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       <h1 className="text-2xl font-bold">Agency Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Active Visas', value: metrics.activeVisas, icon: FileText, color: 'text-blue-500' },
-          { label: 'Pending Tickets', value: metrics.pendingTickets, icon: Plane, color: 'text-orange-500' },
-          { label: 'Total Requests', value: metrics.totalRequests, icon: ClipboardList, color: 'text-green-500' },
-          { label: 'Profile Status', value: metrics.profileStatus, icon: Shield, color: metrics.profileStatus === 'Verified' ? 'text-green-500' : 'text-amber-500' },
+          { label: 'Active Visas', value: metrics.activeVisas, icon: FileText, color: 'text-blue-500', bg: 'bg-blue-50' },
+          { label: 'Pending Tickets', value: metrics.pendingTickets, icon: Plane, color: 'text-orange-500', bg: 'bg-orange-50' },
+          { label: 'Total Requests', value: metrics.totalRequests, icon: ClipboardList, color: 'text-green-500', bg: 'bg-green-50' },
+          { label: 'Profile Status', value: metrics.profileStatus, icon: Shield, color: metrics.profileStatus === 'Verified' ? 'text-green-500' : 'text-amber-500', bg: metrics.profileStatus === 'Verified' ? 'bg-green-50' : 'bg-amber-50' },
         ].map((stat, i) => (
-          <div key={i} className="bg-card p-6 rounded-xl border border-border shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className={`p-3 rounded-lg bg-secondary ${stat.color}`}>
+          <div key={i} className="card-panel p-6 flex items-center gap-4 animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
+            <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
               <stat.icon className="w-6 h-6" />
             </div>
             <div>
