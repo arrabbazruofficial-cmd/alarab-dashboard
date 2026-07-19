@@ -42,17 +42,17 @@ export default function RequestDetails() {
   const handleDownloadAllPassports = async () => {
     if (!id) return;
     try {
-      const res = await api.get(`/requests/${id}/download_passports/`, { responseType: 'blob' });
+      const res = await api.get(`/requests/${id}/download_all_documents/`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Passports_${id.split('-')[0]}.zip`);
+      link.setAttribute('download', `Documents_${id.split('-')[0]}.zip`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error('Failed to download passports', err);
-      alert('Failed to download passports or no passports available.');
+      console.error('Failed to download documents', err);
+      alert('Failed to download documents or no documents available.');
     }
   };
 
@@ -108,8 +108,6 @@ export default function RequestDetails() {
     );
   }
 
-  const hasPassports = request.passengers?.some((p: any) => p.passport_document);
-
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
       
@@ -130,12 +128,12 @@ export default function RequestDetails() {
         >
           <ArrowLeft className="w-4 h-4" /> Back to list
         </button>
-        {(role === 'SUPER_ADMIN' || role === 'ADMIN') && hasPassports && (
+        {(role === 'SUPER_ADMIN' || role === 'ADMIN') && (
           <button 
             onClick={handleDownloadAllPassports}
             className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg font-medium hover:bg-secondary/80 transition-colors shadow-sm text-sm"
           >
-            <FileArchive className="w-4 h-4" /> Download All Passports
+            <FileArchive className="w-4 h-4" /> Download All Documents
           </button>
         )}
       </div>

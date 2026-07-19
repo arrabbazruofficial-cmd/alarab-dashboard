@@ -24,17 +24,29 @@ class RequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        
+        # Optimize queries with select_related and prefetch_related
+        qs = BaseRequest.objects.select_related(
+            'agency', 'agency__user', 'customer', 'assigned_to',
+            'group_visa_details', 'individual_visa_details', 'air_ticket_details'
+        ).prefetch_related(
+            'attachments',
+            'passengers',
+            'group_visa_details__hotels',
+            'group_visa_details__transports'
+        )
+        
         if user.role in ['SUPER_ADMIN', 'ADMIN']:
-            return BaseRequest.objects.all()
+            return qs.all()
         elif user.role == 'AGENCY':
             from agencies.models import Agency
             Agency.objects.get_or_create(
                 user=user,
                 defaults={'company_name': 'Unknown Agency', 'contact_person': 'Owner', 'phone_number': ''}
             )
-            return BaseRequest.objects.filter(agency__user=user)
+            return qs.filter(agency__user=user)
         elif user.role == 'CUSTOMER':
-            return BaseRequest.objects.filter(customer=user)
+            return qs.filter(customer=user)
         return BaseRequest.objects.none()
 
     def perform_create(self, serializer):
@@ -130,90 +142,160 @@ class RequestViewSet(viewsets.ModelViewSet):
         if request.user.role != 'SUPER_ADMIN':
             return Response(status=status.HTTP_403_FORBIDDEN)
         
-        # We need to filter exactly like the list view
         queryset = self.filter_queryset(self.get_queryset())
         
         wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Requests Export"
         
-        headers = [
-            "Request ID", "Agency", "Customer", "Request Type", "Status",
-            "Created Date", "Updated Date", "Assigned Admin", "Passenger Count",
-            "Notes"
-        ]
-        ws.append(headers)
+        # Summary Sheet
+        ws_summary = wb.active
+        ws_summary.title = "Summary"
+        ws_summary.append(["Request ID", "Type", "Agency", "Customer", "Status", "Created At", "Assigned To"])
+        
+        # Passengers Sheet
+        ws_passengers = wb.create_sheet(title="Passengers")
+        ws_passengers.append(["Request ID", "Passenger Name", "Passport", "Nationality", "DOB", "Expiry"])
+        
+        # Group Visa / Hotels Sheet
+        ws_hotels = wb.create_sheet(title="Hotels & Transports")
+        ws_hotels.append(["Request ID", "Type", "Details", "Date/Check-in", "Check-out"])
+        
+        # Individual Visa
+        ws_indiv = wb.create_sheet(title="Individual Visa")
+        ws_indiv.append(["Request ID", "Visa Subtype", "Arrival", "Departure", "Stay Days", "IQAMA"])
+        
+        # Air Ticket
+        ws_air = wb.create_sheet(title="Air Ticket")
+        ws_air.append(["Request ID", "Origin", "Destination", "Dates", "Airline", "Notes"])
         
         for req in queryset:
-            agency_name = req.agency.company_name if hasattr(req, 'agency') and req.agency else ''
-            customer_email = req.customer.email if req.customer else ''
-            assigned_email = req.assigned_to.email if req.assigned_to else ''
-            passenger_count = req.passengers.count() if hasattr(req, 'passengers') else 0
+            req_id_short = str(req.id).split('-')[0]
             
-            row = [
-                str(req.id), agency_name, customer_email, req.get_request_type_display(),
-                req.get_status_display(), req.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                req.updated_at.strftime('%Y-%m-%d %H:%M:%S'), assigned_email, passenger_count,
-                req.admin_notes
-            ]
-            ws.append(row)
+            # Summary
+            ws_summary.append([
+                str(req.id), req.get_request_type_display(),
+                req.agency.company_name if hasattr(req, 'agency') and req.agency else '',
+                req.customer.email if req.customer else '',
+                req.get_status_display(), req.created_at.strftime('%Y-%m-%d %H:%M'),
+                req.assigned_to.email if req.assigned_to else ''
+            ])
             
+            # Passengers
+            if hasattr(req, 'passengers'):
+                for p in req.passengers.all():
+                    ws_passengers.append([
+                        req_id_short, p.full_name, p.passport_number, p.nationality,
+                        str(p.date_of_birth), str(p.passport_expiry)
+                    ])
+                
+            # Group Visa
+            if hasattr(req, 'group_visa_details') and req.group_visa_details:
+                for h in req.group_visa_details.hotels.all():
+                    ws_hotels.append([req_id_short, "Hotel", f"{h.hotel_name} ({h.city}) - {h.room_count} {h.room_type}", str(h.check_in), str(h.check_out)])
+                for t in req.group_visa_details.transports.all():
+                    ws_hotels.append([req_id_short, "Transport", f"{t.transport_type} ({t.period})", str(t.date), str(t.time)])
+                    
+            # Individual Visa
+            if hasattr(req, 'individual_visa_details') and req.individual_visa_details:
+                iv = req.individual_visa_details
+                ws_indiv.append([
+                    req_id_short, iv.visa_subtype, iv.arrival_flight, iv.departure_flight,
+                    str(iv.stay_days), iv.iqama_id
+                ])
+                
+            # Air Ticket
+            if hasattr(req, 'air_ticket_details') and req.air_ticket_details:
+                at = req.air_ticket_details
+                ws_air.append([
+                    req_id_short, at.origin, at.destination, f"{at.departure_date} to {at.arrival_date}",
+                    at.preferred_airline, at.additional_notes
+                ])
+                
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename=Requests_Export.xlsx'
         wb.save(response)
         
-        # Log to audit (simplified placeholder, should use core audit_logger)
-        print(f"Audit: SuperAdmin {request.user.email} exported requests to Excel.")
-        
+        # Log to audit
+        try:
+            from audit.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action="EXPORT_EXCEL",
+                target_type="BaseRequest",
+                details={"count": queryset.count()}
+            )
+        except Exception:
+            pass
+            
         return response
 
     @action(detail=True, methods=['get'])
-    def download_passports(self, request, pk=None):
+    def download_all_documents(self, request, pk=None):
         if request.user.role not in ['SUPER_ADMIN', 'ADMIN']:
             return Response(status=status.HTTP_403_FORBIDDEN)
             
         obj = self.get_object()
-        passengers = obj.passengers.exclude(passport_document='')
+        passengers = obj.passengers.exclude(passport_document='') if hasattr(obj, 'passengers') else []
+        attachments = obj.attachments.all() if hasattr(obj, 'attachments') else []
         
-        if not passengers.exists():
-            return Response({'detail': 'No passports found for this request.'}, status=status.HTTP_404_NOT_FOUND)
+        passengers_exists = passengers.exists() if hasattr(passengers, 'exists') else bool(passengers)
+        attachments_exists = attachments.exists() if hasattr(attachments, 'exists') else bool(attachments)
+        
+        if not passengers_exists and not attachments_exists:
+            return Response({'detail': 'No documents found for this request.'}, status=status.HTTP_404_NOT_FOUND)
             
         import requests
-        
-        if passengers.count() == 1:
-            # Single file download
-            passenger = passengers.first()
-            file_url = passenger.passport_document.url
-            if file_url.startswith('http'):
-                file_response = requests.get(file_url)
-                response = HttpResponse(file_response.content, content_type=file_response.headers.get('content-type', 'application/pdf'))
-            else:
-                response = HttpResponse(passenger.passport_document.read(), content_type='application/pdf')
-                
-            response['Content-Disposition'] = f'attachment; filename="Passport_{passenger.full_name}.pdf"'
-            return response
-            
-        # Multiple files - Zip
         zip_buffer = io.BytesIO()
+        req_id_short = str(obj.id).split('-')[0]
+        
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED, False) as zip_file:
-            for idx, passenger in enumerate(passengers, 1):
-                file_url = passenger.passport_document.url
-                try:
-                    if file_url.startswith('http'):
-                        file_data = requests.get(file_url).content
-                    else:
-                        passenger.passport_document.seek(0)
-                        file_data = passenger.passport_document.read()
-                        
-                    ext = file_url.split('.')[-1]
-                    if len(ext) > 4: ext = "pdf"
-                    filename = f"{idx:02d}_{passenger.full_name.replace(' ', '_')}.{ext}"
-                    zip_file.writestr(filename, file_data)
-                except Exception as e:
-                    print(f"Failed to fetch passport for {passenger.full_name}: {e}")
+            # Passengers
+            if passengers_exists:
+                for p in passengers:
+                    if not p.passport_document: continue
+                    file_url = p.passport_document.url
+                    try:
+                        if file_url.startswith('http'):
+                            file_data = requests.get(file_url).content
+                        else:
+                            p.passport_document.seek(0)
+                            file_data = p.passport_document.read()
+                        ext = file_url.split('.')[-1]
+                        if len(ext) > 4: ext = "pdf"
+                        filename = f"Passengers/{p.full_name.replace(' ', '_')}_Passport.{ext}"
+                        zip_file.writestr(filename, file_data)
+                    except Exception as e:
+                        print(f"Failed to fetch passport for {p.full_name}: {e}")
+            
+            # Attachments
+            if attachments_exists:
+                for a in attachments:
+                    if not a.file: continue
+                    file_url = a.file.url
+                    try:
+                        if file_url.startswith('http'):
+                            file_data = requests.get(file_url).content
+                        else:
+                            a.file.seek(0)
+                            file_data = a.file.read()
+                        filename = f"Attachments/{a.file_name}"
+                        zip_file.writestr(filename, file_data)
+                    except Exception as e:
+                        print(f"Failed to fetch attachment {a.file_name}: {e}")
+                    
+        # Log to audit
+        try:
+            from audit.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action="DOWNLOAD_DOCUMENTS",
+                target_type="BaseRequest",
+                target_id=str(obj.id)
+            )
+        except Exception:
+            pass
                     
         response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename="Passports_Request_{str(obj.id)[:8]}.zip"'
+        response['Content-Disposition'] = f'attachment; filename="Request_{req_id_short}_Documents.zip"'
         return response
 
 
