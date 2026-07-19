@@ -69,9 +69,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         <div className="p-8 pb-4">
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="AR-RABB Tours and Travels Logo" className="w-10 h-10 object-contain drop-shadow-sm brightness-0 invert" />
-            <div>
-              <h1 className="text-xl font-bold font-heading leading-tight tracking-tight text-white">LOGO-TEXT</h1>
-              <p className="text-xs text-white/70 font-medium tracking-wide">ENTERPRISE</p>
+            <div className="flex flex-col justify-center">
+              <img src="/LOGO-TEXT.png" alt="AR-RABB Tours and Travels" className="h-5 w-auto object-contain brightness-0 invert mb-0.5" />
+              <p className="text-[10px] text-white/70 font-medium tracking-widest pl-1">ENTERPRISE</p>
             </div>
           </div>
         </div>
