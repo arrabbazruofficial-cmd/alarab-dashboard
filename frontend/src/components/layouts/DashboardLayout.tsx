@@ -122,7 +122,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       <header className="md:hidden flex items-center justify-between p-4 px-6 text-white shrink-0 z-20">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain brightness-0 invert drop-shadow-sm" />
-          <h1 className="text-lg font-bold font-heading tracking-tight">AR-RABB</h1>
+          <img src="/LOGO-TEXT(1).png" alt="AR-RABB" className="h-4 w-auto object-contain brightness-0 invert" />
         </div>
         <div className="flex items-center gap-4">
           <NotificationBell />
