@@ -3,6 +3,7 @@ import { api } from '@/lib/api';
 import { FileText, Search, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export default function MyRequests() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -65,7 +66,7 @@ export default function MyRequests() {
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
+            <thead className="bg-primary/10 text-[#0F172A] font-medium border-b border-border">
               <tr>
                 <th className="px-6 py-4">Request ID</th>
                 <th className="px-6 py-4">Type</th>
@@ -97,16 +98,14 @@ export default function MyRequests() {
                   else if (req.request_type === 'AIR_TICKET') editPath = '/agency/air-ticket';
 
                   return (
-                    <tr key={req.id} className="hover:bg-secondary/30 transition-colors">
-                      <td className="px-6 py-4 font-medium text-xs font-mono">{req.id.split('-')[0]}...</td>
-                      <td className="px-6 py-4">{req.request_type.replace('_', ' ')}</td>
-                      <td className="px-6 py-4">{new Date(req.created_at).toLocaleDateString()}</td>
-                      <td className="px-6 py-4">
-                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold border", getStatusColor(req.status))}>
-                          {req.status.replace('_', ' ')}
-                        </span>
+                    <tr key={req.id} className="even:bg-secondary/5 hover:bg-primary/5 transition-colors border-b border-border/50 last:border-0 relative">
+                      <td className="px-6 py-5 font-medium text-xs font-mono">{req.id.split('-')[0]}...</td>
+                      <td className="px-6 py-5 font-medium">{req.request_type.replace('_', ' ')}</td>
+                      <td className="px-6 py-5">{new Date(req.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-5">
+                        <StatusBadge status={req.status} />
                       </td>
-                      <td className="px-6 py-4 text-right flex items-center justify-end gap-3">
+                      <td className="px-6 py-5 text-right flex items-center justify-end gap-3">
                         <button 
                           onClick={() => navigate(`/agency/requests/${req.id}`)} 
                           className="text-primary hover:underline font-medium text-xs"

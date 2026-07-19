@@ -202,6 +202,7 @@ class Passenger(models.Model):
     is_lead = models.BooleanField(default=False)
     contact_number = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, default='PENDING')
+    passport_document = models.FileField(upload_to='passports/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -5,10 +5,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from .serializers import (
     RegisterSerializer, UserSerializer, AdminUserSerializer, ChangePasswordSerializer,
-    VerifyOTPSerializer, SendOTPSerializer
+    VerifyOTPSerializer, SendOTPSerializer, CustomTokenObtainPairSerializer
 )
 from .models import OTP
 from core.emails import send_otp_email, notify_admins_new_user
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 User = get_user_model()
 
@@ -123,6 +124,62 @@ class VerifyOTPView(APIView):
                 user.save()
                 otp.delete()
                 return Response({'message': 'Email verified successfully.'})
+            return Response({'error': 'Invalid or expired OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({'error': 'Invalid or expired OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return Response(e.args[0] if e.args else {"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        user = serializer.user
+        
+        if user.role == 'AGENCY':
+            # Require OTP for agency
+            OTP.objects.filter(user=user).delete() # Delete old OTPs
+            otp = OTP.objects.create(user=user)
+            send_otp_email(user.email, otp.code)
+            return Response({'require_otp': True, 'email': user.email, 'message': 'OTP sent to email.'})
+            
+        # For non-agencies, return tokens normally
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+
+class VerifyLoginOTPView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    
+    def post(self, request):
+        email = request.data.get('email')
+        code = request.data.get('code')
+        
+        if not email or not code:
+            return Response({'error': 'Email and code required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            user = User.objects.get(email=email)
+            otp = OTP.objects.filter(user=user, code=code).last()
+            
+            if otp and otp.is_valid():
+                otp.delete()
+                user.is_verified = True
+                user.save()
+                
+                # Generate JWT
+                refresh = RefreshToken.for_user(user)
+                refresh['role'] = user.role
+                refresh['email'] = user.email
+                refresh['is_verified'] = user.is_verified
+                
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }, status=status.HTTP_200_OK)
+                
             return Response({'error': 'Invalid or expired OTP.'}, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
             return Response({'error': 'Invalid or expired OTP.'}, status=status.HTTP_400_BAD_REQUEST)

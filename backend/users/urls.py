@@ -1,20 +1,17 @@
 from django.urls import path
-from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     RegisterView, UserDetailView, ChangePasswordView, LogoutView,
-    AdminUserListView, AdminUserDetailView, SendOTPView, VerifyOTPView
+    AdminUserListView, AdminUserDetailView, SendOTPView, VerifyOTPView,
+    CustomTokenObtainPairView, VerifyLoginOTPView
 )
-from .serializers import CustomTokenObtainPairSerializer
-
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
 
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='auth_register'),
     path('send-otp/', SendOTPView.as_view(), name='send_otp'),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
+    path('verify-login-otp/', VerifyLoginOTPView.as_view(), name='verify_login_otp'),
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('logout/', LogoutView.as_view(), name='auth_logout'),

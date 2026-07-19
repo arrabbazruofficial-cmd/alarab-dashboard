@@ -1,10 +1,15 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from .models import BaseRequest, Attachment
-from .serializers import BaseRequestSerializer, AttachmentSerializer
+import openpyxl
+import zipfile
+import io
+from .models import BaseRequest, Attachment, Passenger
+from .serializers import BaseRequestSerializer, AttachmentSerializer, PassengerSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 from core.emails import notify_admins_new_request, notify_user_status_change
 
 
@@ -120,6 +125,98 @@ class RequestViewSet(viewsets.ModelViewSet):
 
         return Response(BaseRequestSerializer(obj).data)
 
+    @action(detail=False, methods=['get'])
+    def export_excel(self, request):
+        if request.user.role != 'SUPER_ADMIN':
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        
+        # We need to filter exactly like the list view
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Requests Export"
+        
+        headers = [
+            "Request ID", "Agency", "Customer", "Request Type", "Status",
+            "Created Date", "Updated Date", "Assigned Admin", "Passenger Count",
+            "Notes"
+        ]
+        ws.append(headers)
+        
+        for req in queryset:
+            agency_name = req.agency.company_name if hasattr(req, 'agency') and req.agency else ''
+            customer_email = req.customer.email if req.customer else ''
+            assigned_email = req.assigned_to.email if req.assigned_to else ''
+            passenger_count = req.passengers.count() if hasattr(req, 'passengers') else 0
+            
+            row = [
+                str(req.id), agency_name, customer_email, req.get_request_type_display(),
+                req.get_status_display(), req.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                req.updated_at.strftime('%Y-%m-%d %H:%M:%S'), assigned_email, passenger_count,
+                req.admin_notes
+            ]
+            ws.append(row)
+            
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=Requests_Export.xlsx'
+        wb.save(response)
+        
+        # Log to audit (simplified placeholder, should use core audit_logger)
+        print(f"Audit: SuperAdmin {request.user.email} exported requests to Excel.")
+        
+        return response
+
+    @action(detail=True, methods=['get'])
+    def download_passports(self, request, pk=None):
+        if request.user.role not in ['SUPER_ADMIN', 'ADMIN']:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+            
+        obj = self.get_object()
+        passengers = obj.passengers.exclude(passport_document='')
+        
+        if not passengers.exists():
+            return Response({'detail': 'No passports found for this request.'}, status=status.HTTP_404_NOT_FOUND)
+            
+        import requests
+        
+        if passengers.count() == 1:
+            # Single file download
+            passenger = passengers.first()
+            file_url = passenger.passport_document.url
+            if file_url.startswith('http'):
+                file_response = requests.get(file_url)
+                response = HttpResponse(file_response.content, content_type=file_response.headers.get('content-type', 'application/pdf'))
+            else:
+                response = HttpResponse(passenger.passport_document.read(), content_type='application/pdf')
+                
+            response['Content-Disposition'] = f'attachment; filename="Passport_{passenger.full_name}.pdf"'
+            return response
+            
+        # Multiple files - Zip
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED, False) as zip_file:
+            for idx, passenger in enumerate(passengers, 1):
+                file_url = passenger.passport_document.url
+                try:
+                    if file_url.startswith('http'):
+                        file_data = requests.get(file_url).content
+                    else:
+                        passenger.passport_document.seek(0)
+                        file_data = passenger.passport_document.read()
+                        
+                    ext = file_url.split('.')[-1]
+                    if len(ext) > 4: ext = "pdf"
+                    filename = f"{idx:02d}_{passenger.full_name.replace(' ', '_')}.{ext}"
+                    zip_file.writestr(filename, file_data)
+                except Exception as e:
+                    print(f"Failed to fetch passport for {passenger.full_name}: {e}")
+                    
+        response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="Passports_Request_{str(obj.id)[:8]}.zip"'
+        return response
+
+
 
 class AttachmentViewSet(viewsets.ModelViewSet):
     serializer_class = AttachmentSerializer
@@ -153,3 +250,25 @@ class AttachmentViewSet(viewsets.ModelViewSet):
             )
         else:
             serializer.save()
+
+class PassengerViewSet(viewsets.ModelViewSet):
+    serializer_class = PassengerSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role in ['SUPER_ADMIN', 'ADMIN']:
+            return Passenger.objects.all()
+        return Passenger.objects.filter(request__agency__user=user) | Passenger.objects.filter(request__customer=user)
+
+    @action(detail=True, methods=['patch'])
+    def upload(self, request, pk=None):
+        passenger = self.get_object()
+        file_obj = request.FILES.get('passport_document')
+        if not file_obj:
+            return Response({'detail': 'No document provided.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        passenger.passport_document = file_obj
+        passenger.save()
+        return Response(PassengerSerializer(passenger).data)

@@ -7,9 +7,10 @@ import RequestDetails from './shared/RequestDetails';
 import { MoreVertical, Trash2, ShieldCheck, Power, PowerOff } from 'lucide-react';
 
 import { getDashboardStats } from '@/lib/api';
-import { PieChart, Clock, CheckCircle2, XCircle, AlertCircle, Send, FileText as FileTextIcon, Activity, MessageSquare, Users, CheckCircle, ClipboardList, Settings, Bell } from 'lucide-react';
+import { PieChart, Clock, CheckCircle2, XCircle, AlertCircle, Send, FileText as FileTextIcon, Activity, MessageSquare, Users, CheckCircle, ClipboardList, Settings, Bell, Download } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 function DashboardHome() {
   const [stats, setStats] = useState<any>(null);
@@ -113,7 +114,7 @@ function DashboardHome() {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="text-xs text-muted-foreground uppercase bg-secondary/5 border-b border-border">
+                <thead className="bg-primary/10 text-[#0F172A] font-medium border-b border-border">
                   <tr>
                     <th className="px-6 py-4 font-semibold">ID</th>
                     <th className="px-6 py-4 font-semibold">Type</th>
@@ -133,21 +134,14 @@ function DashboardHome() {
                     </tr>
                   ) : (
                     stats?.recent_requests?.map((req: any) => (
-                      <tr key={req.id} className="border-b border-border last:border-0 hover:bg-secondary/5 transition-colors">
-                        <td className="px-6 py-4 font-mono text-xs font-medium text-primary">{req.id.split('-')[0]}</td>
-                        <td className="px-6 py-4 font-medium text-foreground">{req.request_type.replace('_', ' ')}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{req.agency_details?.company_name || req.customer_details?.email || 'N/A'}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            req.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
-                            req.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' :
-                            req.status === 'PROCESSING' ? 'bg-blue-100 text-blue-700' :
-                            'bg-amber-100 text-amber-700'
-                          }`}>
-                            {req.status}
-                          </span>
+                      <tr key={req.id} className="even:bg-secondary/5 hover:bg-primary/5 transition-colors border-b border-border/50 last:border-0">
+                        <td className="px-6 py-5 font-mono text-xs font-semibold text-primary">{req.id.split('-')[0]}</td>
+                        <td className="px-6 py-5 font-medium text-foreground">{req.request_type.replace('_', ' ')}</td>
+                        <td className="px-6 py-5 text-muted-foreground">{req.agency_details?.company_name || req.customer_details?.email || 'N/A'}</td>
+                        <td className="px-6 py-5">
+                          <StatusBadge status={req.status} />
                         </td>
-                        <td className="px-6 py-4 text-right text-muted-foreground whitespace-nowrap">
+                        <td className="px-6 py-5 text-right text-muted-foreground whitespace-nowrap">
                           {format(new Date(req.created_at), 'MMM dd, yyyy')}
                         </td>
                       </tr>
@@ -266,7 +260,7 @@ function UserManagement({ title, role }: { title: string, role?: string }) {
       <div className="card-panel">
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-sm text-left">
-            <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
+            <thead className="bg-primary/10 text-[#0F172A] font-medium border-b border-border">
               <tr>
                 <th className="px-6 py-4">User ID</th>
                 <th className="px-6 py-4">Email</th>
@@ -294,22 +288,22 @@ function UserManagement({ title, role }: { title: string, role?: string }) {
                 </tr>
               ) : (
                 users.map((u) => (
-                  <tr key={u.id} className="hover:bg-secondary/30 transition-colors relative">
-                    <td className="px-6 py-4 font-medium text-xs font-mono">{u.id.split('-')[0]}...</td>
-                    <td className="px-6 py-4 font-medium">{u.email}</td>
-                    {role === 'AGENCY' && <td className="px-6 py-4 text-primary font-semibold">{u.company_name || '—'}</td>}
-                    <td className="px-6 py-4">
+                  <tr key={u.id} className="even:bg-secondary/5 hover:bg-primary/5 transition-colors border-b border-border/50 last:border-0 relative">
+                    <td className="px-6 py-5 font-medium text-xs font-mono">{u.id.split('-')[0]}...</td>
+                    <td className="px-6 py-5 font-medium">{u.email}</td>
+                    {role === 'AGENCY' && <td className="px-6 py-5 text-primary font-semibold">{u.company_name || '—'}</td>}
+                    <td className="px-6 py-5">
                       {u.is_active ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200">
                           <CheckCircle className="w-3.5 h-3.5" /> Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200">
                           <XCircle className="w-3.5 h-3.5" /> Inactive
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-5">
                       {u.is_verified ? (
                         <span className="text-green-600 font-medium">Verified</span>
                       ) : (
@@ -446,11 +440,27 @@ function RequestsManagement({ title, type }: { title: string, type?: string }) {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      const res = await api.get('/requests/export_excel/', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Requests_Export.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Failed to export', err);
+      alert('Failed to export Excel.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">{title}</h1>
-        {selectedIds.length > 0 && (
+        {selectedIds.length > 0 ? (
           <div className="flex flex-wrap items-center gap-3 bg-secondary/50 px-4 py-2 rounded-xl border border-border">
             <span className="text-sm font-medium whitespace-nowrap">{selectedIds.length} selected</span>
             <div className="h-4 w-px bg-border mx-1" />
@@ -476,12 +486,16 @@ function RequestsManagement({ title, type }: { title: string, type?: string }) {
               <Trash2 className="w-4 h-4" /> Delete
             </button>
           </div>
+        ) : (
+          <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
+            <Download className="w-4 h-4" /> Export to Excel
+          </button>
         )}
       </div>
       <div className="card-panel">
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-sm text-left">
-            <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
+            <thead className="bg-primary/10 text-[#0F172A] font-medium border-b border-border">
               <tr>
                 <th className="px-6 py-4 w-12 text-center">
                   <input 
@@ -521,8 +535,8 @@ function RequestsManagement({ title, type }: { title: string, type?: string }) {
                 </tr>
               ) : (
                 requests.map((r) => (
-                  <tr key={r.id} className={`hover:bg-secondary/30 transition-colors relative ${selectedIds.includes(r.id) ? 'bg-secondary/10' : ''}`}>
-                    <td className="px-6 py-4 text-center">
+                  <tr key={r.id} className={`even:bg-secondary/5 hover:bg-primary/5 transition-colors border-b border-border/50 last:border-0 relative ${selectedIds.includes(r.id) ? 'bg-secondary/10' : ''}`}>
+                    <td className="px-6 py-5 text-center">
                       <input 
                         type="checkbox" 
                         className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20"
@@ -536,15 +550,18 @@ function RequestsManagement({ title, type }: { title: string, type?: string }) {
                         }}
                       />
                     </td>
-                    <td className="px-6 py-4 font-medium text-xs font-mono">{r.id.split('-')[0]}</td>
-                    <td className="px-6 py-4 font-medium">{r.request_type.replace('_', ' ')}</td>
-                    <td className="px-6 py-4">{r.agency_details ? r.agency_details.company_name : r.customer_details ? r.customer_details.email : 'Unknown'}</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground border border-border">
-                        {r.status.replace('_', ' ')}
-                      </span>
+                    <td className="px-6 py-5 font-medium text-xs font-mono">{r.id.split('-')[0]}...</td>
+                    <td className="px-6 py-5 font-medium">{r.request_type.replace('_', ' ')}</td>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-primary">{r.agency_details?.company_name || 'Direct Customer'}</span>
+                        <span className="text-xs text-muted-foreground">{r.customer_details?.email}</span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-right relative">
+                    <td className="px-6 py-5">
+                      <StatusBadge status={r.status} />
+                    </td>
+                    <td className="px-6 py-5 text-right relative">
                       <button 
                         onClick={() => navigate(`/admin/requests/${r.id}`)}
                         className="text-primary hover:underline font-medium text-xs mr-4"

@@ -7,6 +7,7 @@ import CustomerRequests from './customer/CustomerRequests';
 import CustomerProfile from './customer/CustomerProfile';
 
 import { getDashboardStats } from '@/lib/api';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Clock, CheckCircle2, AlertCircle, Send, Users } from 'lucide-react';
@@ -76,9 +77,9 @@ function DashboardHome() {
           </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-muted-foreground uppercase bg-secondary/5 border-b border-border">
-              <tr>
+              <table className="w-full text-sm text-left">
+                <thead className="bg-primary/10 text-[#0F172A] font-medium border-b border-border">
+                  <tr>
                 <th className="px-6 py-4 font-semibold">ID</th>
                 <th className="px-6 py-4 font-semibold">Type</th>
                 <th className="px-6 py-4 font-semibold">Status</th>
@@ -95,21 +96,14 @@ function DashboardHome() {
                   <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">No recent requests.</td>
                 </tr>
               ) : (
-                stats?.recent_requests?.map((req: any) => (
-                  <tr key={req.id} className="border-b border-border last:border-0 hover:bg-secondary/5 transition-colors">
-                    <td className="px-6 py-4 font-mono text-xs font-medium text-primary">{req.id.split('-')[0]}</td>
-                    <td className="px-6 py-4 font-medium text-foreground">{req.request_type.replace('_', ' ')}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        req.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
-                        req.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' :
-                        req.status === 'PROCESSING' ? 'bg-blue-100 text-blue-700' :
-                        'bg-amber-100 text-amber-700'
-                      }`}>
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-muted-foreground whitespace-nowrap">
+                    stats?.recent_requests?.map((req: any) => (
+                      <tr key={req.id} className="even:bg-secondary/5 hover:bg-primary/5 transition-colors border-b border-border/50 last:border-0">
+                        <td className="px-6 py-5 font-mono text-xs font-semibold text-primary">{req.id.split('-')[0]}</td>
+                        <td className="px-6 py-5 font-medium text-foreground">{req.request_type.replace('_', ' ')}</td>
+                        <td className="px-6 py-5">
+                          <StatusBadge status={req.status} />
+                        </td>
+                        <td className="px-6 py-5 text-right text-muted-foreground whitespace-nowrap">
                       {format(new Date(req.created_at), 'MMM dd, yyyy')}
                     </td>
                   </tr>
